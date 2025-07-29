@@ -13,13 +13,9 @@ import {
   Heart, 
   Eye, 
   Users, 
-  Calendar,
-  Tag,
   TrendingUp,
   Award,
   Clock,
-  BookOpen,
-  Zap,
   Globe
 } from 'lucide-react';
 import Link from 'next/link';

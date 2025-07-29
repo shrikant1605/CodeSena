@@ -2,32 +2,44 @@
 
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Code, 
   Mail, 
   Lock, 
   ArrowRight, 
-  Github, 
   Chrome,
   Eye,
   EyeOff 
 } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { signInWithGoogle } = useAuth();
+  const router = useRouter();
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true);
+      await signInWithGoogle();
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Error signing in:', error);
+      // Handle error (show toast, etc.)
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      // Redirect to dashboard
-    }, 2000);
+    // Email/password login can be implemented later
+    alert('Email/password login coming soon! Please use Google Sign-In for now.');
   };
 
   return (
@@ -112,13 +124,19 @@ export default function LoginPage() {
 
           {/* Social login buttons */}
           <div className="space-y-3 mb-6">
-            <button className="w-full flex items-center justify-center space-x-3 py-3 px-4 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
-              <Chrome className="w-5 h-5" />
-              <span className="font-medium">Continue with Google</span>
-            </button>
-            <button className="w-full flex items-center justify-center space-x-3 py-3 px-4 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
-              <Github className="w-5 h-5" />
-              <span className="font-medium">Continue with GitHub</span>
+            <button 
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="w-full flex items-center justify-center space-x-3 py-3 px-4 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors disabled:opacity-50"
+            >
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <>
+                  <Chrome className="w-5 h-5" />
+                  <span className="font-medium">Continue with Google</span>
+                </>
+              )}
             </button>
           </div>
 
@@ -127,7 +145,7 @@ export default function LoginPage() {
               <div className="w-full border-t border-slate-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-slate-500">Or continue with email</span>
+              <span className="px-2 bg-white text-slate-500">Or continue with email (coming soon)</span>
             </div>
           </div>
 
@@ -145,9 +163,9 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-3 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-3 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 opacity-50"
                   placeholder="you@example.com"
-                  required
+                  disabled
                 />
               </div>
             </div>
@@ -165,14 +183,15 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-12 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 opacity-50"
                   placeholder="Enter your password"
-                  required
+                  disabled
                 />
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5 text-slate-400" />
@@ -183,35 +202,19 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                <span className="ml-2 text-sm text-slate-600">Remember me</span>
-              </label>
-              <Link href="/auth/forgot-password" className="text-sm text-blue-600 hover:text-blue-700">
-                Forgot password?
-              </Link>
-            </div>
-
             <button
               type="submit"
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center disabled:opacity-70"
+              disabled={true}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center disabled:opacity-50"
             >
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <>
-                  Sign in
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </>
-              )}
+              Sign in (Coming Soon)
+              <ArrowRight className="ml-2 w-5 h-5" />
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-slate-600">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/auth/signup" className="text-blue-600 hover:text-blue-700 font-medium">
                 Sign up for free
               </Link>
