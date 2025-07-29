@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Code, 
   Mail, 
@@ -13,21 +14,35 @@ import {
   EyeOff 
 } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  const { login } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError('');
+      await login(email, password);
+      router.push('/dashboard');
+    } catch {
+      setError('Invalid email or password. Please try again.');
+    } finally {
       setIsLoading(false);
-      // Redirect to dashboard
-    }, 2000);
+    }
   };
 
   return (
@@ -130,6 +145,12 @@ export default function LoginPage() {
               <span className="px-2 bg-white text-slate-500">Or continue with email</span>
             </div>
           </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

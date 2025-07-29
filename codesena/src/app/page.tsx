@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { 
   BookOpen, 
   Users, 
@@ -22,6 +23,7 @@ import {
   Heart
 } from 'lucide-react';
 import Link from 'next/link';
+import { apiService } from '@/services/api';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 60 },
@@ -38,6 +40,31 @@ const staggerContainer = {
 };
 
 export default function Home() {
+  const [communityStats, setCommunityStats] = useState({
+    totalUsers: 0,
+    totalQuestions: 0,
+    totalProjects: 0,
+    totalWorkshops: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  // Fetch community stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const stats = await apiService.getCommunityStats();
+        setCommunityStats(stats);
+      } catch (error) {
+        console.error('Failed to fetch community stats:', error);
+        // Keep default values (zeros) if API fails
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Navigation */}
@@ -140,22 +167,28 @@ export default function Home() {
                 <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="w-6 h-6 text-blue-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">1000+</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                  {loading ? '...' : communityStats.totalUsers > 0 ? `${communityStats.totalUsers}+` : '0'}
+                </h3>
                 <p className="text-slate-600">Students Learning</p>
               </div>
               <div className="p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <div className="bg-purple-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Trophy className="w-6 h-6 text-purple-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">50+</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                  {loading ? '...' : communityStats.totalProjects > 0 ? `${communityStats.totalProjects}+` : '0'}
+                </h3>
                 <p className="text-slate-600">Projects Built</p>
               </div>
               <div className="p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <div className="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Star className="w-6 h-6 text-green-600" />
+                  <MessageCircle className="w-6 h-6 text-green-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">95%</h3>
-                <p className="text-slate-600">Success Rate</p>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                  {loading ? '...' : communityStats.totalQuestions > 0 ? `${communityStats.totalQuestions}+` : '0'}
+                </h3>
+                <p className="text-slate-600">Questions Discussed</p>
               </div>
             </motion.div>
           </motion.div>
@@ -448,9 +481,12 @@ export default function Home() {
               viewport={{ once: true }}
             >
               <h3 className="text-3xl font-bold mb-4">Ready to Start Your Journey?</h3>
-              <p className="text-xl mb-8 opacity-90">
-                Join 1000+ students who are already learning, building, and growing together.
-              </p>
+                             <p className="text-xl mb-8 opacity-90">
+                 {communityStats.totalUsers > 0 
+                   ? `Join ${communityStats.totalUsers}+ students who are already learning, building, and growing together.`
+                   : 'Be among the first students to learn, build, and grow together in our community.'
+                 }
+               </p>
                              <div className="flex flex-col sm:flex-row gap-4 justify-center">
                  <Link href="/auth/signup" className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center justify-center">
                    <Zap className="mr-2 w-5 h-5" />

@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Code, 
   Mail, 
@@ -16,6 +17,7 @@ import {
   Calendar
 } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth, SignupData } from '@/contexts/AuthContext';
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -27,12 +29,16 @@ export default function SignupPage() {
     university: '',
     branch: '',
     year: '',
-    interests: []
+    interests: [] as string[]
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
+  const [error, setError] = useState('');
+  
+  const { signup } = useAuth();
+  const router = useRouter();
 
   const techInterests = [
     'Web Development', 'Mobile Development', 'Data Science', 'Machine Learning',
@@ -63,17 +69,54 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
     if (step < 3) {
+      // Validate current step
+      if (step === 1) {
+        if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
+          setError('Please fill in all required fields');
+          return;
+        }
+        if (formData.password !== formData.confirmPassword) {
+          setError('Passwords do not match');
+          return;
+        }
+        if (formData.password.length < 6) {
+          setError('Password must be at least 6 characters long');
+          return;
+        }
+      }
+      if (step === 2) {
+        if (!formData.university || !formData.branch || !formData.year) {
+          setError('Please fill in all required fields');
+          return;
+        }
+      }
       setStep(step + 1);
       return;
     }
     
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      setIsLoading(true);
+      const signupData: SignupData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        university: formData.university,
+        branch: formData.branch,
+        year: formData.year,
+        interests: formData.interests
+      };
+      
+      await signup(signupData);
+      router.push('/dashboard');
+    } catch {
+      setError('Failed to create account. Please try again.');
+    } finally {
       setIsLoading(false);
-      // Redirect to dashboard
-    }, 2000);
+    }
   };
 
   const renderStep1 = () => (

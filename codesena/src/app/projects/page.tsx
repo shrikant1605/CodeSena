@@ -1,7 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Code, 
   Search, 
@@ -20,9 +21,13 @@ import {
   Clock,
   BookOpen,
   Zap,
-  Globe
+  Globe,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth, useUserInitials } from '@/contexts/AuthContext';
+import { apiService, Project } from '@/services/api';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -38,163 +43,105 @@ const staggerContainer = {
   }
 };
 
+// Empty state component
+function EmptyState({ 
+  icon: Icon, 
+  title, 
+  description, 
+  action 
+}: { 
+  icon: any, 
+  title: string, 
+  description: string, 
+  action?: { label: string, href: string } 
+}) {
+  return (
+    <div className="text-center py-16">
+      <Icon className="w-16 h-16 text-slate-400 mx-auto mb-6" />
+      <h3 className="text-xl font-semibold text-slate-900 mb-3">{title}</h3>
+      <p className="text-slate-600 mb-6 max-w-md mx-auto">{description}</p>
+      {action && (
+        <Link 
+          href={action.href}
+          className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+        >
+          {action.label}
+          <Plus className="ml-2 w-5 h-5" />
+        </Link>
+      )}
+    </div>
+  );
+}
+
+// Loading component
+function LoadingSpinner() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <span className="ml-3 text-slate-600 text-lg">Loading projects...</span>
+    </div>
+  );
+}
+
 export default function ProjectsPage() {
+  const { user } = useAuth();
+  const userInitials = useUserInitials();
+  const router = useRouter();
+
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [totalProjects, setTotalProjects] = useState(0);
 
-  const projects = [
-    {
-      id: 1,
-      title: "E-commerce Platform with MERN Stack",
-      description: "A full-featured e-commerce platform with user authentication, payment integration, order management, and admin dashboard. Built using React, Node.js, Express, and MongoDB.",
-      author: {
-        name: "Arjun Patel",
-        avatar: "👨‍💻",
-        year: "3rd Year",
-        points: 420
-      },
-      category: "Full Stack",
-      tags: ["React", "Node.js", "MongoDB", "Express", "Stripe"],
-      stars: 24,
-      likes: 67,
-      views: 340,
-      dateCreated: "2 weeks ago",
-      githubUrl: "https://github.com/arjun/ecommerce-platform",
-      liveUrl: "https://ecommerce-demo.vercel.app",
-      image: "🛒",
-      difficulty: "Advanced",
-      status: "Completed",
-      teamSize: 1,
-      lookingForCollaborators: false
-    },
-    {
-      id: 2,
-      title: "AI-Powered Study Planner",
-      description: "Smart study planner that uses machine learning to optimize study schedules based on your learning patterns, deadlines, and performance history.",
-      author: {
-        name: "Priya Sharma",
-        avatar: "👩‍🎓",
-        year: "4th Year",
-        points: 580
-      },
-      category: "AI/ML",
-      tags: ["Python", "TensorFlow", "React", "Django", "NLP"],
-      stars: 31,
-      likes: 89,
-      views: 450,
-      dateCreated: "1 week ago",
-      githubUrl: "https://github.com/priya/ai-study-planner",
-      liveUrl: "https://study-planner-ai.netlify.app",
-      image: "🤖",
-      difficulty: "Advanced",
-      status: "In Progress",
-      teamSize: 3,
-      lookingForCollaborators: true
-    },
-    {
-      id: 3,
-      title: "Real-time Chat Application",
-      description: "WebSocket-based chat application with rooms, file sharing, emoji reactions, and real-time notifications. Perfect for team communication.",
-      author: {
-        name: "Rohit Kumar",
-        avatar: "👨‍🎓",
-        year: "2nd Year",
-        points: 280
-      },
-      category: "Web Development",
-      tags: ["React", "Socket.io", "Node.js", "Express", "MongoDB"],
-      stars: 18,
-      likes: 45,
-      views: 220,
-      dateCreated: "3 days ago",
-      githubUrl: "https://github.com/rohit/realtime-chat",
-      liveUrl: "https://chat-app-realtime.herokuapp.com",
-      image: "💬",
-      difficulty: "Intermediate",
-      status: "Completed",
-      teamSize: 2,
-      lookingForCollaborators: false
-    },
-    {
-      id: 4,
-      title: "Mobile Expense Tracker",
-      description: "React Native app for tracking daily expenses with beautiful charts, budget alerts, and spending insights. Supports offline sync and cloud backup.",
-      author: {
-        name: "Anjali Gupta",
-        avatar: "👩‍💻",
-        year: "3rd Year",
-        points: 350
-      },
-      category: "Mobile Development",
-      tags: ["React Native", "Firebase", "AsyncStorage", "Charts"],
-      stars: 22,
-      likes: 56,
-      views: 180,
-      dateCreated: "5 days ago",
-      githubUrl: "https://github.com/anjali/expense-tracker",
-      liveUrl: null,
-      image: "📱",
-      difficulty: "Intermediate",
-      status: "Beta",
-      teamSize: 1,
-      lookingForCollaborators: true
-    },
-    {
-      id: 5,
-      title: "Blockchain Voting System",
-      description: "Decentralized voting application using Ethereum smart contracts. Ensures transparency, security, and immutability of voting records.",
-      author: {
-        name: "Vikram Singh",
-        avatar: "👨‍🎓",
-        year: "4th Year",
-        points: 490
-      },
-      category: "Blockchain",
-      tags: ["Solidity", "Ethereum", "Web3.js", "React", "Truffle"],
-      stars: 35,
-      likes: 78,
-      views: 520,
-      dateCreated: "1 month ago",
-      githubUrl: "https://github.com/vikram/blockchain-voting",
-      liveUrl: "https://voting-dapp.netlify.app",
-      image: "🗳️",
-      difficulty: "Advanced",
-      status: "Completed",
-      teamSize: 4,
-      lookingForCollaborators: false
-    },
-    {
-      id: 6,
-      title: "Weather Dashboard",
-      description: "Beautiful weather dashboard with forecasts, interactive maps, and weather alerts. My first React project with API integration!",
-      author: {
-        name: "Neha Patel",
-        avatar: "👩‍🎓",
-        year: "1st Year",
-        points: 120
-      },
-      category: "Web Development",
-      tags: ["React", "API", "CSS", "Weather API"],
-      stars: 8,
-      likes: 25,
-      views: 95,
-      dateCreated: "2 days ago",
-      githubUrl: "https://github.com/neha/weather-dashboard",
-      liveUrl: "https://weather-dash-neha.netlify.app",
-      image: "🌤️",
-      difficulty: "Beginner",
-      status: "Completed",
-      teamSize: 1,
-      lookingForCollaborators: false
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!user) {
+      router.push('/auth/login');
     }
-  ];
+  }, [user, router]);
+
+  // Fetch projects
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const filters = {
+          search: searchQuery || undefined,
+          category: selectedCategory === 'all' ? undefined : selectedCategory,
+          page: 1,
+          limit: 12
+        };
+
+        const response = await apiService.getProjects(filters);
+        setProjects(response.projects);
+        setHasMore(response.hasMore);
+        setTotalProjects(response.total);
+
+      } catch (err) {
+        console.error('Failed to fetch projects:', err);
+        setError('Failed to load projects. Please try again.');
+        setProjects([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchProjects();
+    }
+  }, [user, selectedCategory, searchQuery]);
 
   const categories = [
-    { id: 'all', label: 'All Projects', count: 24 },
-    { id: 'web', label: 'Web Development', count: 12 },
-    { id: 'mobile', label: 'Mobile Development', count: 5 },
-    { id: 'ai', label: 'AI/ML', count: 4 },
-    { id: 'blockchain', label: 'Blockchain', count: 3 }
+    { id: 'all', label: 'All Projects', count: totalProjects },
+    { id: 'web', label: 'Web Development', count: 0 },
+    { id: 'mobile', label: 'Mobile Development', count: 0 },
+    { id: 'ai', label: 'AI/ML', count: 0 },
+    { id: 'blockchain', label: 'Blockchain', count: 0 }
   ];
 
   const techTags = [
@@ -220,6 +167,34 @@ export default function ProjectsPage() {
     }
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Search will be triggered by useEffect when searchQuery changes
+  };
+
+  const handleLikeProject = async (projectId: string) => {
+    try {
+      await apiService.likeProject(projectId);
+      // In a real app, update the projects state here
+    } catch (err) {
+      console.error('Failed to like project:', err);
+    }
+  };
+
+  const handleStarProject = async (projectId: string) => {
+    try {
+      await apiService.starProject(projectId);
+      // In a real app, update the projects state here
+    } catch (err) {
+      console.error('Failed to star project:', err);
+    }
+  };
+
+  // Don't render if user is not authenticated
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Navigation */}
@@ -243,8 +218,8 @@ export default function ProjectsPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 Share Project
               </Link>
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                J
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                {userInitials}
               </div>
             </div>
           </div>
@@ -262,6 +237,13 @@ export default function ProjectsPage() {
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Project Showcase</h1>
           <p className="text-slate-600">Discover amazing projects from the community and find collaboration opportunities.</p>
         </motion.div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center">
+            <AlertCircle className="w-5 h-5 mr-2" />
+            {error}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
@@ -341,7 +323,7 @@ export default function ProjectsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="flex flex-col md:flex-row gap-4">
+              <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
                   <input
@@ -353,7 +335,10 @@ export default function ProjectsPage() {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <button className="flex items-center px-4 py-3 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">
+                  <button 
+                    type="submit"
+                    className="flex items-center px-4 py-3 border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors"
+                  >
                     <Filter className="w-5 h-5 mr-2" />
                     Filter
                   </button>
@@ -362,7 +347,7 @@ export default function ProjectsPage() {
                     Trending
                   </button>
                 </div>
-              </div>
+              </form>
             </motion.div>
 
             {/* Projects Grid */}
@@ -372,160 +357,212 @@ export default function ProjectsPage() {
               initial="initial"
               animate="animate"
             >
-              {projects.map((project, index) => (
-                <motion.div
-                  key={project.id}
-                  variants={fadeInUp}
-                  className="bg-white rounded-2xl shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 overflow-hidden group"
-                >
-                  {/* Project Header */}
-                  <div className="p-6 pb-4">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="text-4xl">{project.image}</div>
-                        <div>
-                          <h3 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                            {project.title}
-                          </h3>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <span className={`px-2 py-1 text-xs rounded-full ${getDifficultyColor(project.difficulty)}`}>
-                              {project.difficulty}
-                            </span>
-                            <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(project.status)}`}>
-                              {project.status}
-                            </span>
+              {loading ? (
+                <div className="col-span-full">
+                  <LoadingSpinner />
+                </div>
+              ) : projects.length === 0 ? (
+                <div className="col-span-full">
+                  <motion.div variants={fadeInUp}>
+                    <EmptyState
+                      icon={BookOpen}
+                      title="No projects found"
+                      description={searchQuery 
+                        ? `No projects match your search for "${searchQuery}". Try different keywords or share your own project.`
+                        : "Be the first to showcase your project and inspire others in the community!"
+                      }
+                      action={{ 
+                        label: searchQuery ? "Clear Search" : "Share First Project", 
+                        href: searchQuery ? "/projects" : "/projects/create" 
+                      }}
+                    />
+                  </motion.div>
+                </div>
+              ) : (
+                projects.map((project, index) => (
+                  <motion.div
+                    key={project.id}
+                    variants={fadeInUp}
+                    className="bg-white rounded-2xl shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300 overflow-hidden group"
+                  >
+                    {/* Project Header */}
+                    <div className="p-6 pb-4">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="text-4xl">{project.image || '📁'}</div>
+                          <div>
+                            <h3 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                              {project.title}
+                            </h3>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <span className={`px-2 py-1 text-xs rounded-full ${getDifficultyColor(project.difficulty)}`}>
+                                {project.difficulty}
+                              </span>
+                              <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(project.status)}`}>
+                                {project.status}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      {project.lookingForCollaborators && (
-                        <div className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
-                          <Users className="w-3 h-3 inline mr-1" />
-                          Hiring
-                        </div>
-                      )}
-                    </div>
-
-                    <p className="text-slate-600 mb-4 line-clamp-3">
-                      {project.description}
-                    </p>
-
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {project.tags.slice(0, 4).map((tag, tagIndex) => (
-                        <span
-                          key={tagIndex}
-                          className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {project.tags.length > 4 && (
-                        <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md">
-                          +{project.tags.length - 4} more
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Stats */}
-                    <div className="flex items-center justify-between text-sm text-slate-500 mb-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-1">
-                          <Star className="w-4 h-4 text-yellow-500" />
-                          <span>{project.stars}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Heart className="w-4 h-4 text-red-500" />
-                          <span>{project.likes}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Eye className="w-4 h-4" />
-                          <span>{project.views}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{project.dateCreated}</span>
-                      </div>
-                    </div>
-
-                    {/* Author */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm">
-                          {project.author.avatar}
-                        </div>
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium text-slate-900">{project.author.name}</span>
-                            <span className="text-xs text-slate-500">•</span>
-                            <span className="text-xs text-slate-500">{project.author.year}</span>
+                        {project.lookingForCollaborators && (
+                          <div className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+                            <Users className="w-3 h-3 inline mr-1" />
+                            Hiring
                           </div>
-                          <div className="flex items-center space-x-1">
-                            <Award className="w-3 h-3 text-yellow-500" />
-                            <span className="text-xs text-slate-600">{project.author.points} points</span>
-                          </div>
-                        </div>
-                      </div>
-                      {project.teamSize > 1 && (
-                        <div className="text-xs text-slate-500 flex items-center">
-                          <Users className="w-3 h-3 mr-1" />
-                          Team of {project.teamSize}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Project Actions */}
-                  <div className="px-6 py-4 bg-slate-50 border-t border-slate-100">
-                    <div className="flex items-center justify-between">
-                      <div className="flex space-x-2">
-                        <a
-                          href={project.githubUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center px-3 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors text-sm"
-                        >
-                          <Github className="w-4 h-4 mr-1" />
-                          Code
-                        </a>
-                        {project.liveUrl && (
-                          <a
-                            href={project.liveUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                          >
-                            <Globe className="w-4 h-4 mr-1" />
-                            Live
-                          </a>
                         )}
                       </div>
-                      
-                      <div className="flex space-x-2">
-                        <button className="p-2 text-slate-400 hover:text-red-500 transition-colors">
-                          <Heart className="w-4 h-4" />
-                        </button>
-                        <button className="p-2 text-slate-400 hover:text-yellow-500 transition-colors">
-                          <Star className="w-4 h-4" />
-                        </button>
+
+                      <p className="text-slate-600 mb-4 line-clamp-3">
+                        {project.description}
+                      </p>
+
+                      {/* Tags */}
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {project.tags.slice(0, 4).map((tag, tagIndex) => (
+                          <span
+                            key={tagIndex}
+                            className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {project.tags.length > 4 && (
+                          <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md">
+                            +{project.tags.length - 4} more
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Stats */}
+                      <div className="flex items-center justify-between text-sm text-slate-500 mb-4">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex items-center space-x-1">
+                            <Star className="w-4 h-4 text-yellow-500" />
+                            <span>{project.stars}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Heart className="w-4 h-4 text-red-500" />
+                            <span>{project.likes}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Eye className="w-4 h-4" />
+                            <span>{project.views}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Clock className="w-4 h-4" />
+                          <span>{project.dateCreated}</span>
+                        </div>
+                      </div>
+
+                      {/* Author */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm">
+                            {project.author.avatar || project.author.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium text-slate-900">{project.author.name}</span>
+                              <span className="text-xs text-slate-500">•</span>
+                              <span className="text-xs text-slate-500">{project.author.year}</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Award className="w-3 h-3 text-yellow-500" />
+                              <span className="text-xs text-slate-600">{project.author.points} points</span>
+                            </div>
+                          </div>
+                        </div>
+                        {project.teamSize > 1 && (
+                          <div className="text-xs text-slate-500 flex items-center">
+                            <Users className="w-3 h-3 mr-1" />
+                            Team of {project.teamSize}
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+
+                    {/* Project Actions */}
+                    <div className="px-6 py-4 bg-slate-50 border-t border-slate-100">
+                      <div className="flex items-center justify-between">
+                        <div className="flex space-x-2">
+                          {project.githubUrl && (
+                            <a
+                              href={project.githubUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center px-3 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors text-sm"
+                            >
+                              <Github className="w-4 h-4 mr-1" />
+                              Code
+                            </a>
+                          )}
+                          {project.liveUrl && (
+                            <a
+                              href={project.liveUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                            >
+                              <Globe className="w-4 h-4 mr-1" />
+                              Live
+                            </a>
+                          )}
+                        </div>
+                        
+                        <div className="flex space-x-2">
+                          <button 
+                            onClick={() => handleLikeProject(project.id)}
+                            className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                          >
+                            <Heart className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleStarProject(project.id)}
+                            className="p-2 text-slate-400 hover:text-yellow-500 transition-colors"
+                          >
+                            <Star className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              )}
             </motion.div>
 
             {/* Load More */}
-            <motion.div 
-              className="mt-8 text-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-            >
-              <button className="px-8 py-3 bg-white border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors font-medium">
-                Load More Projects
-              </button>
-            </motion.div>
+            {!loading && projects.length > 0 && hasMore && (
+              <motion.div 
+                className="mt-8 text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+              >
+                <button className="px-8 py-3 bg-white border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors font-medium">
+                  Load More Projects
+                </button>
+              </motion.div>
+            )}
+
+            {/* No more projects message */}
+            {!loading && projects.length > 0 && !hasMore && (
+              <motion.div 
+                className="mt-8 text-center py-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+              >
+                <p className="text-slate-500">You've seen all the projects!</p>
+                <Link 
+                  href="/projects/create"
+                  className="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Share Your Project
+                </Link>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>
