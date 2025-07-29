@@ -1,9 +1,9 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { 
   BookOpen, 
-  Users, 
   Trophy, 
   Code, 
   Zap, 
@@ -17,11 +17,12 @@ import {
   Calendar,
   MessageCircle,
   Award,
-  TrendingUp,
   Globe,
   Heart
 } from 'lucide-react';
 import Link from 'next/link';
+import { getLeaderboard } from '@/lib/db';
+import { LeaderboardEntry } from '@/lib/types';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 60 },
@@ -38,6 +39,24 @@ const staggerContainer = {
 };
 
 export default function Home() {
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const data = await getLeaderboard(3); // Get top 3 for landing page
+        setLeaderboard(data);
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+      } finally {
+        setLoadingLeaderboard(false);
+      }
+    };
+
+    fetchLeaderboard();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Navigation */}
@@ -100,63 +119,33 @@ export default function Home() {
                 Where Students Learn, Build & Grow Together
               </span>
             </motion.div>
-
+            
             <motion.h1 
               variants={fadeInUp}
               className="text-5xl md:text-7xl font-bold text-slate-900 mb-6"
             >
-              Welcome to <br />
-              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                CodeSena
-              </span>
+              Code. <span className="text-blue-600">Connect.</span> <span className="text-purple-600">Create.</span>
             </motion.h1>
-
+            
             <motion.p 
               variants={fadeInUp}
-              className="text-xl text-slate-600 mb-8 max-w-3xl mx-auto leading-relaxed"
+              className="text-xl md:text-2xl text-slate-600 max-w-4xl mx-auto mb-12"
             >
-              A student-driven, tech-first community where every learner — beginner to advanced — 
-              grows through collaboration, mentorship, and real-world projects.
+              Join thousands of students in our vibrant tech community. Learn from peers, share projects, and accelerate your coding journey through collaborative learning.
             </motion.p>
-
+            
             <motion.div 
               variants={fadeInUp}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
+              className="flex flex-col sm:flex-row gap-6 justify-center items-center"
             >
-              <Link href="/auth/signup" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center justify-center">
-                Start Your Journey
-                <ArrowRight className="ml-2 w-5 h-5" />
+              <Link href="/auth/signup" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:shadow-xl transition-all duration-300 flex items-center">
+                <Zap className="mr-2 w-6 h-6" />
+                Join the Community
+                <ArrowRight className="ml-2 w-6 h-6" />
               </Link>
-              <Link href="/dashboard" className="border-2 border-slate-300 text-slate-700 px-8 py-4 rounded-xl font-semibold hover:border-blue-500 hover:text-blue-600 transition-all duration-300 text-center">
-                Explore Community
+              <Link href="#features" className="border-2 border-slate-300 text-slate-700 px-8 py-4 rounded-2xl font-semibold text-lg hover:border-blue-300 hover:text-blue-600 transition-all duration-300">
+                Explore Features
               </Link>
-            </motion.div>
-
-            <motion.div 
-              variants={fadeInUp}
-              className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center"
-            >
-              <div className="p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-6 h-6 text-blue-600" />
-                </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">1000+</h3>
-                <p className="text-slate-600">Students Learning</p>
-              </div>
-              <div className="p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div className="bg-purple-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Trophy className="w-6 h-6 text-purple-600" />
-                </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">50+</h3>
-                <p className="text-slate-600">Projects Built</p>
-              </div>
-              <div className="p-6 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div className="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Star className="w-6 h-6 text-green-600" />
-                </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">95%</h3>
-                <p className="text-slate-600">Success Rate</p>
-              </div>
             </motion.div>
           </motion.div>
         </div>
@@ -173,15 +162,15 @@ export default function Home() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
-              Our <span className="text-blue-600">Mission</span>
+              Why <span className="text-blue-600">CodeSena</span>?
             </h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              Bridging the gap between knowledge and opportunity by building an ecosystem where students learn, build, and grow together.
+              Traditional learning often feels isolated. We believe the best way to learn coding is together — through collaboration, mentorship, and real-world projects.
             </p>
           </motion.div>
 
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
             variants={staggerContainer}
             initial="initial"
             whileInView="animate"
@@ -189,14 +178,13 @@ export default function Home() {
           >
             <motion.div variants={fadeInUp} className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300">
               <div className="bg-blue-100 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
-                <TrendingUp className="w-8 h-8 text-blue-600" />
+                <Brain className="w-8 h-8 text-blue-600" />
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4">Upskill the Campus</h3>
-              <p className="text-slate-600 mb-4">Organize hands-on workshops, coding bootcamps, and weekly learning sessions focused on job-ready skills.</p>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">Learn Faster</h3>
+              <p className="text-slate-600 mb-4">Get instant help from peers, discover new concepts through Q&A, and learn from real-world project experiences.</p>
               <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">DSA</span>
-                <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm">Java Backend</span>
-                <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm">MERN</span>
+                <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">Q&A Forum</span>
+                <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm">Peer Learning</span>
                 <span className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-sm">DevOps</span>
               </div>
             </motion.div>
@@ -208,7 +196,7 @@ export default function Home() {
               <h3 className="text-2xl font-bold text-slate-900 mb-4">Build Real Projects</h3>
               <p className="text-slate-600 mb-4">Encourage project-based learning with mini teams. From beginner clones to real-world SaaS tools.</p>
               <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg">
-                <p className="text-sm font-semibold text-purple-700">"Build in Public" is our motto</p>
+                <p className="text-sm font-semibold text-purple-700">&quot;Build in Public&quot; is our motto</p>
               </div>
             </motion.div>
 
@@ -241,7 +229,7 @@ export default function Home() {
               <span className="text-purple-600">Gamified</span> Mentorship System
             </h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto mb-8">
-              "Helping others should be as rewarding as learning." Our unique point-based system makes mentorship engaging and rewarding.
+              &quot;Helping others should be as rewarding as learning.&quot; Our unique point-based system makes mentorship engaging and rewarding.
             </p>
           </motion.div>
 
@@ -292,47 +280,53 @@ export default function Home() {
               viewport={{ once: true }}
               className="bg-gradient-to-br from-blue-50 to-purple-50 p-8 rounded-2xl"
             >
-              <h3 className="text-2xl font-bold text-slate-900 mb-6">Monthly Leaderboard</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                      <span className="text-yellow-600 font-bold">1</span>
+              <h3 className="text-2xl font-bold text-slate-900 mb-6">Top Contributors</h3>
+              
+              {loadingLeaderboard ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm animate-pulse">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-slate-200 rounded-full"></div>
+                        <div className="w-24 h-4 bg-slate-200 rounded"></div>
+                      </div>
+                      <div className="w-16 h-4 bg-slate-200 rounded"></div>
                     </div>
-                    <span className="font-semibold">Alex Kumar</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Trophy className="w-4 h-4 text-yellow-500" />
-                    <span className="font-bold text-yellow-600">250 pts</span>
-                  </div>
+                  ))}
                 </div>
-                
-                <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                      <span className="text-gray-600 font-bold">2</span>
+              ) : leaderboard.length > 0 ? (
+                <div className="space-y-4">
+                  {leaderboard.map((entry, index) => (
+                    <div key={entry.userId} className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          index === 0 ? 'bg-yellow-100 text-yellow-600' : 
+                          index === 1 ? 'bg-gray-100 text-gray-600' : 
+                          'bg-orange-100 text-orange-600'
+                        }`}>
+                          <span className="font-bold">{entry.rank}</span>
+                        </div>
+                        <span className="font-semibold">{entry.user?.name || 'Anonymous'}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {index === 0 ? <Trophy className="w-4 h-4 text-yellow-500" /> :
+                         index === 1 ? <Star className="w-4 h-4 text-gray-500" /> :
+                         <Award className="w-4 h-4 text-orange-500" />}
+                        <span className={`font-bold ${
+                          index === 0 ? 'text-yellow-600' : 
+                          index === 1 ? 'text-gray-600' : 
+                          'text-orange-600'
+                        }`}>{entry.points} pts</span>
+                      </div>
                     </div>
-                    <span className="font-semibold">Priya Sharma</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Star className="w-4 h-4 text-gray-500" />
-                    <span className="font-bold text-gray-600">185 pts</span>
-                  </div>
+                  ))}
                 </div>
-                
-                <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                      <span className="text-orange-600 font-bold">3</span>
-                    </div>
-                    <span className="font-semibold">Rahul Singh</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Award className="w-4 h-4 text-orange-500" />
-                    <span className="font-bold text-orange-600">142 pts</span>
-                  </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Trophy className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                  <p className="text-slate-600">Be the first to start helping others and earn points!</p>
                 </div>
-              </div>
+              )}
               
               <div className="mt-6 p-4 bg-white rounded-xl">
                 <h4 className="font-semibold text-slate-900 mb-2">Monthly Rewards</h4>
@@ -358,15 +352,15 @@ export default function Home() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
-              Platform <span className="text-blue-600">Features</span>
+              Everything You Need to <span className="text-purple-600">Succeed</span>
             </h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              Everything you need to learn, collaborate, and grow in one comprehensive platform.
+              From Q&A forums to project showcases, we&apos;ve built a comprehensive platform for student developers.
             </p>
           </motion.div>
 
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
             variants={staggerContainer}
             initial="initial"
             whileInView="animate"
@@ -376,24 +370,16 @@ export default function Home() {
               <div className="bg-blue-100 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
                 <MessageCircle className="w-8 h-8 text-blue-600" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-4">Peer-to-Peer Q&A</h3>
-              <p className="text-slate-600">Ask questions, get answers, and help others. Think LinkedIn + StackOverflow for your college.</p>
-            </motion.div>
-
-            <motion.div variants={fadeInUp} className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <div className="bg-purple-100 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
-                <Users className="w-8 h-8 text-purple-600" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-4">Mentorship Connect</h3>
-              <p className="text-slate-600">Connect with seniors in your field, book mentorship slots, and collaborate on ideas.</p>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">Q&A Forum</h3>
+              <p className="text-slate-600">Get instant help from peers and mentors. Share knowledge and grow together.</p>
             </motion.div>
 
             <motion.div variants={fadeInUp} className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
               <div className="bg-green-100 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
                 <BookOpen className="w-8 h-8 text-green-600" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-4">Project Showcase</h3>
-              <p className="text-slate-600">Share your projects, get feedback, and discover amazing work from fellow students.</p>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">Project Gallery</h3>
+              <p className="text-slate-600">Showcase your work, get feedback, and discover amazing projects from peers.</p>
             </motion.div>
 
             <motion.div variants={fadeInUp} className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
@@ -437,7 +423,7 @@ export default function Home() {
               Join Our <span className="text-purple-600">Community</span>
             </h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto mb-12">
-              Whether you're just starting out or already an expert — there's always room to contribute, learn, and get better at what you do.
+              Whether you&apos;re just starting out or already an expert — there&apos;s always room to contribute, learn, and get better at what you do.
             </p>
             
             <motion.div 
@@ -449,17 +435,17 @@ export default function Home() {
             >
               <h3 className="text-3xl font-bold mb-4">Ready to Start Your Journey?</h3>
               <p className="text-xl mb-8 opacity-90">
-                Join 1000+ students who are already learning, building, and growing together.
+                Join students who are already learning, building, and growing together.
               </p>
-                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                 <Link href="/auth/signup" className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center justify-center">
-                   <Zap className="mr-2 w-5 h-5" />
-                   Get Started Now
-                 </Link>
-                 <Link href="/dashboard" className="border-2 border-white text-white px-8 py-4 rounded-xl font-semibold hover:bg-white hover:text-blue-600 transition-all duration-300 text-center">
-                   Learn More
-                 </Link>
-               </div>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/auth/signup" className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center justify-center">
+                  <Zap className="mr-2 w-5 h-5" />
+                  Get Started Now
+                </Link>
+                <Link href="/dashboard" className="border-2 border-white text-white px-8 py-4 rounded-xl font-semibold hover:bg-white hover:text-blue-600 transition-all duration-300 text-center">
+                  Learn More
+                </Link>
+              </div>
             </motion.div>
           </motion.div>
 
@@ -501,7 +487,7 @@ export default function Home() {
                 Building the future of student collaboration in tech. Join our mission to create a thriving community where every learner can grow.
               </p>
               <div className="text-sm text-slate-400">
-                © 2024 CodeSena. Building tomorrow's tech leaders today.
+                © 2024 CodeSena. Building tomorrow&apos;s tech leaders today.
               </div>
             </div>
             
